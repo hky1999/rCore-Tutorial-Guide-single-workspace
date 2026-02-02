@@ -1,0 +1,623 @@
+<!doctype html>
+<html class="no-js" lang="zh_CN">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="索引" href="../genindex.html" /><link rel="search" title="搜索" href="../search.html" /><link rel="next" title="特权级切换机制" href="2context-switching.html" /><link rel="prev" title="引言" href="0intro-new.html" />
+
+    <meta name="generator" content="sphinx-4.1.2, furo 2021.08.31"/>
+        <title>应用程序链接与加载 - rCore-Tutorial-Guide 文档</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=c7c65a82b42f6b978e58466c1e9ef2509836d916" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/my_style.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">rCore-Tutorial-Guide  文档</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">rCore-Tutorial-Guide  文档</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder=搜索 name="q" aria-label="搜索">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">正文</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../0setup-devel-env.html">第零章：实验环境配置</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter1/index.html">第一章：应用程序与基本执行环境</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter1/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter1/1app-ee-platform.html">应用程序执行环境与平台支持</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter1/2remove-std.html">移除标准库依赖</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter1/3mini-rt-usrland.html">构建用户态执行环境</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter1/4mini-rt-baremetal.html">构建裸机执行环境</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">第二章：批处理系统</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0intro-new.html">引言</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">应用程序链接与加载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="2context-switching.html">特权级切换机制</a></li>
+<li class="toctree-l2"><a class="reference internal" href="3syscall-mechanism.html">系统调用机制</a></li>
+<li class="toctree-l2"><a class="reference internal" href="4batch-system-summary.html">辅助组件与批处理系统总结</a></li>
+<li class="toctree-l2"><a class="reference internal" href="5exercise.html">chapter2练习（已废弃）</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter3/index.html">第三章：多道程序与分时多任务</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter3/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter3/1multi-loader.html">多道程序放置与加载</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter3/3multiprogramming.html">管理多道程序</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter3/4time-sharing-system.html">分时多任务系统</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter3/5exercise.html">chapter3练习</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter4/index.html">第四章：地址空间</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/3sv39-implementation-1.html">实现 SV39 多级页表机制（上）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/4sv39-implementation-2.html">实现 SV39 多级页表机制（下）</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/5kernel-app-spaces.html">内核与应用的地址空间</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/6multitasking-based-on-as.html">基于地址空间的分时多任务</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter4/7exercise.html">chapter4练习</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter5/index.html">第五章：进程及进程管理</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter5/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter5/1process.html">与进程有关的重要系统调用</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter5/2core-data-structures.html">进程管理的核心数据结构</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter5/3implement-process-mechanism.html">进程管理机制的设计实现</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter5/4exercise.html">chapter5练习</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter6/index.html">第六章：文件系统与I/O重定向</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/1file-descriptor.html">文件与文件描述符</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/1fs-interface.html">文件系统接口</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/2fs-implementation-1.html">简易文件系统 easy-fs (上)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/2fs-implementation-2.html">简易文件系统 easy-fs (下)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/3using-easy-fs-in-kernel.html">在内核中使用 easy-fs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter6/4exercise.html">chapter6练习</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter7/index.html">第七章：进程间通信</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter7/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter7/1pipe.html">管道</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter7/2cmdargs-and-redirection.html">命令行参数与标准 I/O 重定向</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter7/3exercise.html">chapter7练习</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../chapter8/index.html">第八章：并发</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/0intro.html">引言</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/1thread-kernel.html">内核态的线程管理</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/2lock.html">锁机制</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/3semaphore.html">信号量机制</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/4condition-variable.html">条件变量机制</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../chapter8/5exercise.html">chapter8 练习</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">附录</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../appendix-a/index.html">附录 A：Rust 系统编程资料</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix-b/index.html">附录 B：常见工具的使用方法</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix-c/index.html">附录 C：深入机器模式：RustSBI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendix-d/index.html">附录 D：RISC-V相关信息</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">开发注记</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup-sphinx.html">修改和构建本项目</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest-example.html">reStructuredText 基本语法</a></li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <article role="main">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <div class="section" id="id1">
+<h1>应用程序链接与加载<a class="headerlink" href="#id1" title="永久链接至标题">¶</a></h1>
+<p>本节将介绍批处理系统如何将多个用户程序链接到内核，并在运行时加载执行。</p>
+<div class="section" id="id2">
+<h2>应用程序的组织方式<a class="headerlink" href="#id2" title="永久链接至标题">¶</a></h2>
+<p>在第一章中，我们只有一个裸机应用程序。而批处理系统需要管理多个应用程序，并依次执行它们。</p>
+<p>观察 <code class="docutils literal notranslate"><span class="pre">user/cases.toml</span></code> 中第二章的配置：</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[ch2]</span>
+<span class="n">base</span> <span class="o">=</span> <span class="mi">0</span><span class="n">x8040_0000</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">cases</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">"00hello_world"</span><span class="p">,</span>
+    <span class="s">"01store_fault"</span><span class="p">,</span>
+    <span class="s">"02power"</span><span class="p">,</span>
+    <span class="s">"03priv_inst"</span><span class="p">,</span>
+    <span class="s">"04priv_csr"</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>这个配置指定了：</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">base</span> <span class="pre">=</span> <span class="pre">0x8040_0000</span></code>: 所有程序的加载地址都是 <code class="docutils literal notranslate"><span class="pre">0x80400000</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">=</span> <span class="pre">0</span></code>: 程序间没有地址间隔（因为批处理系统每次只运行一个）</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cases</span></code>: 要构建和运行的用户程序列表</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">注解</p>
+<p><strong>为什么 step = 0？</strong></p>
+<p>在批处理系统中，程序是依次执行的。当一个程序结束后，内核会清空该地址空间，
+然后将下一个程序加载到同一位置。这与第三章的多道程序系统不同——那里需要
+同时在内存中保留多个程序，所以 <code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">=</span> <span class="pre">0x0020_0000</span></code>，每个程序占用 2MB 空间。</p>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>应用程序的构建过程<a class="headerlink" href="#id3" title="永久链接至标题">¶</a></h2>
+<p>用户程序的构建由 <code class="docutils literal notranslate"><span class="pre">xtask/src/user.rs</span></code> 中的 <code class="docutils literal notranslate"><span class="pre">build_for</span></code> 函数控制。
+当我们运行 <code class="docutils literal notranslate"><span class="pre">cargo</span> <span class="pre">qemu</span> <span class="pre">--ch</span> <span class="pre">2</span></code> 时，构建过程如下：</p>
+<ol class="arabic">
+<li><p><strong>读取配置</strong>：从 <code class="docutils literal notranslate"><span class="pre">user/cases.toml</span></code> 读取第二章的应用列表</p></li>
+<li><p><strong>编译各个程序</strong>：对于每个程序（如 <code class="docutils literal notranslate"><span class="pre">00hello_world</span></code>），执行：</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cargo build --package user_lib --bin 00hello_world <span class="se">\</span>
+    --target riscv64gc-unknown-none-elf
+</pre></div>
+</div>
+<p>由于 <code class="docutils literal notranslate"><span class="pre">base</span> <span class="pre">=</span> <span class="pre">0x80400000</span></code> 且 <code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">=</span> <span class="pre">0</span></code>，所有程序都被链接到相同的起始地址。</p>
+</li>
+<li><p><strong>生成链接汇编</strong>：创建 <code class="docutils literal notranslate"><span class="pre">target/riscv64gc-unknown-none-elf/debug/app.asm</span></code> 文件：</p>
+<div class="highlight-asm notranslate"><div class="highlight"><pre><span></span><span class="na">.global</span> <span class="no">apps</span>
+<span class="na">.section</span> <span class="no">.data</span>
+<span class="na">.align</span> <span class="mi">3</span>
+<span class="nl">apps:</span>
+    <span class="na">.quad</span> <span class="mi">0x80400000</span>      <span class="c1"># base 地址</span>
+    <span class="na">.quad</span> <span class="mi">0</span>               <span class="c1"># step（间隔为 0）</span>
+    <span class="na">.quad</span> <span class="mi">5</span>               <span class="c1"># 应用程序数量</span>
+    <span class="na">.quad</span> <span class="no">app_0_start</span>     <span class="c1"># 各程序起始位置</span>
+    <span class="na">.quad</span> <span class="no">app_1_start</span>
+    <span class="na">.quad</span> <span class="no">app_2_start</span>
+    <span class="na">.quad</span> <span class="no">app_3_start</span>
+    <span class="na">.quad</span> <span class="no">app_4_start</span>
+    <span class="na">.quad</span> <span class="no">app_4_end</span>       <span class="c1"># 最后一个程序的结束位置</span>
+
+<span class="nl">app_0_start:</span>
+    <span class="na">.incbin</span> <span class="s">"path/to/00hello_world.bin"</span>
+<span class="nl">app_0_end:</span>
+
+<span class="nl">app_1_start:</span>
+    <span class="na">.incbin</span> <span class="s">"path/to/01store_fault.bin"</span>
+<span class="nl">app_1_end:</span>
+
+<span class="c1"># ... 其他程序</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>这个汇编文件定义了一个全局符号 <code class="docutils literal notranslate"><span class="pre">apps</span></code>，它是一个数据结构，记录了：</p>
+<ul class="simple">
+<li><p>前三个字段：<code class="docutils literal notranslate"><span class="pre">base</span></code>、<code class="docutils literal notranslate"><span class="pre">step</span></code>、<code class="docutils literal notranslate"><span class="pre">count</span></code></p></li>
+<li><p>后续字段：各个程序二进制数据在内核中的位置</p></li>
+</ul>
+<ol class="arabic" start="4">
+<li><p><strong>链接到内核</strong>：<code class="docutils literal notranslate"><span class="pre">ch2/src/main.rs</span></code> 通过以下代码引入应用程序：</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="c1">// 在编译时将 app.asm 中定义的应用程序二进制数据嵌入内核</span>
+<span class="n">core</span>::<span class="n">arch</span>::<span class="fm">global_asm!</span><span class="p">(</span><span class="fm">include_str!</span><span class="p">(</span><span class="fm">env!</span><span class="p">(</span><span class="s">"APP_ASM"</span><span class="p">)));</span><span class="w"></span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">env!("APP_ASM")</span></code> 是构建脚本设置的环境变量，指向 <code class="docutils literal notranslate"><span class="pre">app.asm</span></code> 文件。</p>
+</li>
+</ol>
+</div>
+<div class="section" id="linker">
+<h2>linker 组件：管理应用程序元数据<a class="headerlink" href="#linker" title="永久链接至标题">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">linker</span></code> 组件提供了访问应用程序元数据的接口。</p>
+<p><strong>AppMeta 结构</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">linker/src/app.rs</span></code> 定义了应用程序元数据：</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="cp">#[repr(C)]</span><span class="w"></span>
+<span class="k">pub</span><span class="w"> </span><span class="k">struct</span> <span class="nc">AppMeta</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="n">base</span>: <span class="kt">u64</span><span class="p">,</span><span class="w">       </span><span class="c1">// 应用加载的基地址</span>
+<span class="w">    </span><span class="n">step</span>: <span class="kt">u64</span><span class="p">,</span><span class="w">       </span><span class="c1">// 应用间地址间隔</span>
+<span class="w">    </span><span class="n">count</span>: <span class="kt">u64</span><span class="p">,</span><span class="w">      </span><span class="c1">// 应用数量</span>
+<span class="w">    </span><span class="n">first</span>: <span class="kt">u64</span><span class="p">,</span><span class="w">      </span><span class="c1">// 第一个应用的起始地址指针</span>
+<span class="p">}</span><span class="w"></span>
+
+<span class="k">impl</span><span class="w"> </span><span class="n">AppMeta</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">locate</span><span class="p">()</span><span class="w"> </span>-&gt; <span class="kp">&amp;</span><span class="o">'</span><span class="nb">static</span> <span class="nc">Self</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">extern</span><span class="w"> </span><span class="s">"C"</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="k">static</span><span class="w"> </span><span class="n">apps</span>: <span class="nc">AppMeta</span><span class="p">;</span><span class="w">  </span><span class="c1">// 链接 app.asm 中的 apps 符号</span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&amp;</span><span class="n">apps</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">fn</span> <span class="nf">iter</span><span class="p">(</span><span class="o">&amp;'</span><span class="nb">static</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">AppIterator</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="n">AppIterator</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">meta</span>: <span class="nc">self</span><span class="p">,</span><span class="w"> </span><span class="n">i</span>: <span class="mi">0</span><span class="w"> </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">locate()</span></code> 方法找到链接脚本中的 <code class="docutils literal notranslate"><span class="pre">apps</span></code> 符号，将其解释为 <code class="docutils literal notranslate"><span class="pre">AppMeta</span></code> 结构。</p>
+<p><strong>AppIterator：遍历并加载应用</strong></p>
+<p>迭代器在遍历时会自动加载应用程序：</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">impl</span><span class="w"> </span><span class="nb">Iterator</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">AppIterator</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="k">type</span> <span class="nc">Item</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;'</span><span class="nb">static</span><span class="w"> </span><span class="p">[</span><span class="kt">u8</span><span class="p">];</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">fn</span> <span class="nf">next</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Option</span><span class="o">&lt;</span><span class="bp">Self</span>::<span class="n">Item</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">i</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">meta</span><span class="p">.</span><span class="n">count</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="nb">None</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="kd">let</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">i</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">usize</span><span class="p">;</span><span class="w"></span>
+<span class="w">            </span><span class="bp">self</span><span class="p">.</span><span class="n">i</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+<span class="w">            </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="c1">// 读取应用程序在内核数据段中的位置</span>
+<span class="w">                </span><span class="kd">let</span><span class="w"> </span><span class="n">slice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">core</span>::<span class="n">slice</span>::<span class="n">from_raw_parts</span><span class="p">(</span><span class="w"></span>
+<span class="w">                    </span><span class="o">&amp;</span><span class="bp">self</span><span class="p">.</span><span class="n">meta</span><span class="p">.</span><span class="n">first</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="o">*</span><span class="k">const</span><span class="w"> </span><span class="kt">usize</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">meta</span><span class="p">.</span><span class="n">count</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">);</span><span class="w"></span>
+<span class="w">                </span><span class="kd">let</span><span class="w"> </span><span class="n">pos</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice</span><span class="p">[</span><span class="n">i</span><span class="p">];</span><span class="w">          </span><span class="c1">// 当前应用的数据起始</span>
+<span class="w">                </span><span class="kd">let</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">slice</span><span class="p">[</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">pos</span><span class="p">;</span><span class="w">  </span><span class="c1">// 应用大小</span>
+<span class="w">                </span><span class="kd">let</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">meta</span><span class="p">.</span><span class="n">base</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">usize</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="bp">self</span><span class="p">.</span><span class="n">meta</span><span class="p">.</span><span class="n">step</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">usize</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                    </span><span class="c1">// 将应用从内核数据段拷贝到目标地址</span>
+<span class="w">                    </span><span class="n">core</span>::<span class="n">ptr</span>::<span class="n">copy_nonoverlapping</span>::<span class="o">&lt;</span><span class="kt">u8</span><span class="o">&gt;</span><span class="p">(</span><span class="w"></span>
+<span class="w">                        </span><span class="n">pos</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="w"></span>
+<span class="w">                    </span><span class="p">);</span><span class="w"></span>
+<span class="w">                    </span><span class="c1">// 清空后续空间（确保程序有足够的运行空间）</span>
+<span class="w">                    </span><span class="n">core</span>::<span class="n">slice</span>::<span class="n">from_raw_parts_mut</span><span class="p">(</span><span class="n">base</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">u8</span><span class="p">,</span><span class="w"> </span><span class="mh">0x20_0000</span><span class="p">)</span><span class="w"></span>
+<span class="w">                        </span><span class="p">[</span><span class="n">size</span><span class="o">..</span><span class="p">].</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">                    </span><span class="nb">Some</span><span class="p">(</span><span class="n">core</span>::<span class="n">slice</span>::<span class="n">from_raw_parts</span><span class="p">(</span><span class="n">base</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">))</span><span class="w"></span>
+<span class="w">                </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                    </span><span class="nb">Some</span><span class="p">(</span><span class="n">core</span>::<span class="n">slice</span>::<span class="n">from_raw_parts</span><span class="p">(</span><span class="n">pos</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">_</span><span class="p">,</span><span class="w"> </span><span class="n">size</span><span class="p">))</span><span class="w"></span>
+<span class="w">                </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>这个迭代器的巧妙之处在于：</p>
+<ul class="simple">
+<li><p>每次调用 <code class="docutils literal notranslate"><span class="pre">next()</span></code> 时，它会将下一个应用的二进制数据从内核数据段拷贝到 <code class="docutils literal notranslate"><span class="pre">base</span> <span class="pre">+</span> <span class="pre">i</span> <span class="pre">*</span> <span class="pre">step</span></code> 地址</p></li>
+<li><p>在 ch2 中，由于 <code class="docutils literal notranslate"><span class="pre">base</span> <span class="pre">=</span> <span class="pre">0x80400000</span></code> 且 <code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">=</span> <span class="pre">0</span></code>，所有程序都被加载到同一地址</p></li>
+<li><p>拷贝后还会清空后续的内存空间（<code class="docutils literal notranslate"><span class="pre">0x200000</span></code> = 2MB），为程序提供运行空间</p></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>批处理执行流程<a class="headerlink" href="#id4" title="永久链接至标题">¶</a></h2>
+<p>在 <code class="docutils literal notranslate"><span class="pre">ch2/src/main.rs</span></code> 中，批处理的核心循环如下：</p>
+<div class="highlight-rust notranslate"><div class="highlight"><pre><span></span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">app</span><span class="p">)</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">linker</span>::<span class="n">AppMeta</span>::<span class="n">locate</span><span class="p">().</span><span class="n">iter</span><span class="p">().</span><span class="n">enumerate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">app_base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">as_ptr</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">usize</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">log</span>::<span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">"load app{i} to {app_base:#x}"</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// 为应用程序初始化用户态上下文</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">ctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalContext</span>::<span class="n">user</span><span class="p">(</span><span class="n">app_base</span><span class="p">);</span><span class="w"></span>
+
+<span class="w">    </span><span class="c1">// 设置用户栈</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="k">mut</span><span class="w"> </span><span class="n">user_stack</span>: <span class="nc">core</span>::<span class="n">mem</span>::<span class="n">MaybeUninit</span><span class="o">&lt;</span><span class="p">[</span><span class="kt">usize</span><span class="p">;</span><span class="w"> </span><span class="mi">256</span><span class="p">]</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"></span>
+<span class="w">        </span><span class="n">core</span>::<span class="n">mem</span>::<span class="n">MaybeUninit</span>::<span class="n">uninit</span><span class="p">();</span><span class="w"></span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">user_stack_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">user_stack</span><span class="p">.</span><span class="n">as_mut_ptr</span><span class="p">()</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="o">*</span><span class="k">mut</span><span class="w"> </span><span class="kt">usize</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="o">*</span><span class="n">ctx</span><span class="p">.</span><span class="n">sp_mut</span><span class="p">()</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">user_stack_ptr</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="mi">256</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">usize</span><span class="p">;</span><span class="w"></span>
+
+<span class="w">    </span><span class="k">loop</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">        </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="n">execute</span><span class="p">()</span><span class="w"> </span><span class="p">};</span><span class="w">  </span><span class="c1">// 执行用户程序</span>
+
+<span class="w">        </span><span class="c1">// 处理 Trap（系统调用、异常等）</span>
+<span class="w">        </span><span class="k">use</span><span class="w"> </span><span class="n">scause</span>::<span class="p">{</span><span class="n">Exception</span><span class="p">,</span><span class="w"> </span><span class="n">Trap</span><span class="p">};</span><span class="w"></span>
+<span class="w">        </span><span class="k">match</span><span class="w"> </span><span class="n">scause</span>::<span class="n">read</span><span class="p">().</span><span class="n">cause</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">            </span><span class="n">Trap</span>::<span class="n">Exception</span><span class="p">(</span><span class="n">Exception</span>::<span class="n">UserEnvCall</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="c1">// 处理系统调用</span>
+<span class="w">                </span><span class="k">match</span><span class="w"> </span><span class="n">handle_syscall</span><span class="p">(</span><span class="o">&amp;</span><span class="k">mut</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                    </span><span class="n">Done</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">continue</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="n">Exit</span><span class="p">(</span><span class="n">code</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                        </span><span class="n">log</span>::<span class="n">info</span><span class="o">!</span><span class="p">(</span><span class="s">"app{i} exit with code {code}"</span><span class="p">);</span><span class="w"></span>
+<span class="w">                        </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">                    </span><span class="p">}</span><span class="w"></span>
+<span class="w">                    </span><span class="n">Error</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                        </span><span class="n">log</span>::<span class="n">error</span><span class="o">!</span><span class="p">(</span><span class="s">"app{i} call an unsupported syscall {}"</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="p">.</span><span class="mi">0</span><span class="p">);</span><span class="w"></span>
+<span class="w">                        </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">                    </span><span class="p">}</span><span class="w"></span>
+<span class="w">                </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="p">}</span><span class="w"></span>
+<span class="w">            </span><span class="n">trap</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">                </span><span class="n">log</span>::<span class="n">error</span><span class="o">!</span><span class="p">(</span><span class="s">"app{i} was killed because of {trap:?}"</span><span class="p">);</span><span class="w"></span>
+<span class="w">                </span><span class="k">break</span><span class="p">;</span><span class="w"></span>
+<span class="w">            </span><span class="p">}</span><span class="w"></span>
+<span class="w">        </span><span class="p">}</span><span class="w"></span>
+
+<span class="w">        </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">core</span>::<span class="n">arch</span>::<span class="fm">asm!</span><span class="p">(</span><span class="s">"fence.i"</span><span class="p">)</span><span class="w"> </span><span class="p">};</span><span class="w">  </span><span class="c1">// 清除指令缓存</span>
+<span class="w">    </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
+</pre></div>
+</div>
+<p>执行流程总结：</p>
+<ol class="arabic simple">
+<li><p>迭代器自动将下一个应用加载到 <code class="docutils literal notranslate"><span class="pre">0x80400000</span></code></p></li>
+<li><p>创建用户态上下文，设置 PC 为应用入口，SP 为用户栈顶</p></li>
+<li><p>通过 <code class="docutils literal notranslate"><span class="pre">ctx.execute()</span></code> 切换到用户态执行应用</p></li>
+<li><p>当发生 Trap（系统调用或异常）时，返回内核处理</p></li>
+<li><p>处理完成后，要么继续执行（系统调用），要么终止程序（退出或异常）</p></li>
+<li><p>当前应用结束后，循环继续，加载下一个应用</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">注解</p>
+<p><strong>fence.i 指令的作用</strong></p>
+<p>在应用程序结束后，我们需要执行 <code class="docutils literal notranslate"><span class="pre">fence.i</span></code> 指令清空指令缓存（i-cache）。
+这是因为下一个应用会被加载到同一地址，如果不清空 i-cache，CPU 可能会
+执行到缓存中旧程序的指令，导致错误。</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>小结<a class="headerlink" href="#id5" title="永久链接至标题">¶</a></h2>
+<p>本节介绍了批处理系统中应用程序的组织、构建、链接和加载过程：</p>
+<ul class="simple">
+<li><p>应用程序通过 <code class="docutils literal notranslate"><span class="pre">cases.toml</span></code> 配置，由 <code class="docutils literal notranslate"><span class="pre">xtask</span></code> 构建工具编译</p></li>
+<li><p>所有应用的二进制数据通过 <code class="docutils literal notranslate"><span class="pre">app.asm</span></code> 链接到内核数据段</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">linker</span></code> 组件的 <code class="docutils literal notranslate"><span class="pre">AppMeta</span></code> 和 <code class="docutils literal notranslate"><span class="pre">AppIterator</span></code> 提供了访问应用的接口</p></li>
+<li><p>批处理执行流程通过迭代器依次加载并执行应用</p></li>
+</ul>
+<p>与第三章的多道程序系统相比，批处理系统的设计更简单：</p>
+<ul class="simple">
+<li><p>所有程序共用同一地址（<code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">=</span> <span class="pre">0</span></code>）</p></li>
+<li><p>每次只运行一个程序，运行结束后清空内存</p></li>
+<li><p>不需要复杂的内存管理和调度算法</p></li>
+</ul>
+<p>下一节将介绍 <code class="docutils literal notranslate"><span class="pre">kernel-context</span></code> 组件，它实现了用户态和内核态之间的上下文切换。</p>
+</div>
+</div>
+
+      </article>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="2context-switching.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">特权级切换机制</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="0intro-new.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">引言</div>
+                
+              </div>
+            </a>
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; OSLab
+            |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+            |
+            <a class="muted-link" href="../_sources/chapter2/1application-loading.rst.txt"
+               rel="nofollow">
+              显示源代码
+            </a>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            目录
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">应用程序链接与加载</a><ul>
+<li><a class="reference internal" href="#id2">应用程序的组织方式</a></li>
+<li><a class="reference internal" href="#id3">应用程序的构建过程</a></li>
+<li><a class="reference internal" href="#linker">linker 组件：管理应用程序元数据</a></li>
+<li><a class="reference internal" href="#id4">批处理执行流程</a></li>
+<li><a class="reference internal" href="#id5">小结</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/scripts/main.js"></script>
+    <script kind="utterances">
+
+    var commentsRunWhenDOMLoaded = cb => {
+    if (document.readyState != 'loading') {
+        cb()
+    } else if (document.addEventListener) {
+        document.addEventListener('DOMContentLoaded', cb)
+    } else {
+        document.attachEvent('onreadystatechange', function() {
+        if (document.readyState == 'complete') cb()
+        })
+    }
+}
+
+var addUtterances = () => {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src = "https://utteranc.es/client.js";
+    script.async = "async";
+
+    script.setAttribute("repo", "LearningOS/rCore-Tutorial-Guide");
+    script.setAttribute("issue-term", "pathname");
+    script.setAttribute("theme", "github-light");
+    script.setAttribute("label", "comments");
+    script.setAttribute("crossorigin", "anonymous");
+
+    sections = document.querySelectorAll("div.section");
+    if (sections !== null) {
+        section = sections[sections.length-1];
+        section.appendChild(script);
+    }
+}
+commentsRunWhenDOMLoaded(addUtterances);
+</script>
+    <script src="../_static/translations.js"></script>
+    </body>
+</html>
